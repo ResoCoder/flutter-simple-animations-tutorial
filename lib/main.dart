@@ -1,4 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:simple_animations/simple_animations.dart';
+import 'package:supercharged/supercharged.dart';
+
+enum AnimProps {
+  opacity,
+  width,
+  height,
+  padding,
+  borderRadius,
+  color,
+}
 
 class StaggerDemo extends StatefulWidget {
   @override
@@ -9,12 +20,7 @@ class _StaggerDemoState extends State<StaggerDemo>
     with TickerProviderStateMixin {
   AnimationController controller;
 
-  Animation<double> opacity;
-  Animation<double> width;
-  Animation<double> height;
-  Animation<EdgeInsets> padding;
-  Animation<BorderRadius> borderRadius;
-  Animation<Color> color;
+  Animation<TimelineValue<AnimProps>> animation;
 
   @override
   void initState() {
@@ -25,81 +31,60 @@ class _StaggerDemoState extends State<StaggerDemo>
       vsync: this,
     );
 
-    opacity = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: controller,
-        curve: Interval(
-          0.0,
-          0.100,
+    animation = TimelineTween<AnimProps>()
+        // Opacity
+        .addScene(
+          begin: 0.milliseconds,
+          end: 100.milliseconds,
           curve: Curves.ease,
-        ),
-      ),
-    );
-    width = Tween<double>(
-      begin: 50.0,
-      end: 150.0,
-    ).animate(
-      CurvedAnimation(
-        parent: controller,
-        curve: Interval(
-          0.125,
-          0.250,
+        )
+        .animate(AnimProps.opacity, tween: Tween(begin: 0.0, end: 1.0))
+        // Width
+        .addSubsequentScene(
+          delay: 25.milliseconds,
+          duration: 125.milliseconds,
           curve: Curves.ease,
-        ),
-      ),
-    );
-    height = Tween<double>(begin: 50.0, end: 150.0).animate(
-      CurvedAnimation(
-        parent: controller,
-        curve: Interval(
-          0.250,
-          0.375,
+        )
+        .animate(AnimProps.width, tween: Tween(begin: 50.0, end: 150.0))
+        // Height and Padding
+        .addSubsequentScene(
+          duration: 125.milliseconds,
           curve: Curves.ease,
-        ),
-      ),
-    );
-    padding = EdgeInsetsTween(
-      begin: const EdgeInsets.only(bottom: 16.0),
-      end: const EdgeInsets.only(bottom: 75.0),
-    ).animate(
-      CurvedAnimation(
-        parent: controller,
-        curve: Interval(
-          0.250,
-          0.375,
+        )
+        .animate(AnimProps.height, tween: Tween(begin: 50.0, end: 150.0))
+        .animate(
+          AnimProps.padding,
+          tween: EdgeInsetsTween(
+            begin: const EdgeInsets.only(bottom: 16.0),
+            end: const EdgeInsets.only(bottom: 75.0),
+          ),
+        )
+        // BorderRadius
+        .addSubsequentScene(
+          duration: 125.milliseconds,
           curve: Curves.ease,
-        ),
-      ),
-    );
-    borderRadius = BorderRadiusTween(
-      begin: BorderRadius.circular(4.0),
-      end: BorderRadius.circular(75.0),
-    ).animate(
-      CurvedAnimation(
-        parent: controller,
-        curve: Interval(
-          0.375,
-          0.500,
+        )
+        .animate(
+          AnimProps.borderRadius,
+          tween: BorderRadiusTween(
+            begin: BorderRadius.circular(4.0),
+            end: BorderRadius.circular(75.0),
+          ),
+        )
+        // Color
+        .addSubsequentScene(
+          duration: 250.milliseconds,
           curve: Curves.ease,
-        ),
-      ),
-    );
-    color = ColorTween(
-      begin: Colors.indigo[100],
-      end: Colors.orange[400],
-    ).animate(
-      CurvedAnimation(
-        parent: controller,
-        curve: Interval(
-          0.500,
-          0.750,
-          curve: Curves.ease,
-        ),
-      ),
-    );
+        )
+        .animate(
+          AnimProps.color,
+          tween: ColorTween(
+            begin: Colors.indigo[100],
+            end: Colors.orange[400],
+          ),
+        )
+        .parent
+        .animatedBy(controller);
   }
 
   @override
@@ -145,20 +130,20 @@ class _StaggerDemoState extends State<StaggerDemo>
 
   Widget _buildAnimation(BuildContext context, Widget child) {
     return Container(
-      padding: padding.value,
+      padding: animation.value.get(AnimProps.padding),
       alignment: Alignment.bottomCenter,
       child: Opacity(
-        opacity: opacity.value,
+        opacity: animation.value.get(AnimProps.opacity),
         child: Container(
-          width: width.value,
-          height: height.value,
+          width: animation.value.get(AnimProps.width),
+          height: animation.value.get(AnimProps.height),
           decoration: BoxDecoration(
-            color: color.value,
+            color: animation.value.get(AnimProps.color),
             border: Border.all(
               color: Colors.indigo[300],
               width: 3.0,
             ),
-            borderRadius: borderRadius.value,
+            borderRadius: animation.value.get(AnimProps.borderRadius),
           ),
         ),
       ),
